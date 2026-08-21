@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Exercise } from '../types/fitness';
 import { useLanguage } from '../context/LanguageContext';
 import { useWorkout } from '../context/WorkoutContext';
+import { useUserProfile } from '../context/UserProfileContext';
 import { 
   Plus, 
   Info, 
@@ -10,7 +11,9 @@ import {
   Flame, 
   Check, 
   ShieldAlert,
-  ChevronDown
+  ChevronDown,
+  TrendingUp,
+  Zap
 } from 'lucide-react';
 
 interface ExerciseCardProps {
@@ -26,9 +29,20 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
 }) => {
   const { language, t } = useLanguage();
   const { isFavorite, toggleFavorite } = useWorkout();
+  const { getExerciseCalorieEstimate, setIsTreadmillModalOpen, profile } = useUserProfile();
   const [imageLoaded, setImageLoaded] = useState(false);
 
   const favorited = isFavorite(exercise.id);
+
+  // Compute accurate calories for this specific exercise and user biometrics
+  const calEst = getExerciseCalorieEstimate(
+    exercise,
+    exercise.defaultSets,
+    exercise.defaultReps,
+    exercise.defaultRestSec
+  );
+
+  const isTreadmill = exercise.id.includes('treadmill');
 
   // Colors based on category
   const categoryBadgeColors: Record<string, string> = {
@@ -113,9 +127,12 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
           <span className="px-2 py-0.5 rounded-md bg-zinc-900/90 border border-zinc-800 text-zinc-300 font-medium backdrop-blur-sm">
             {language === 'ar' ? eqInfo.ar : eqInfo.en}
           </span>
-          <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-md border backdrop-blur-sm ${diffInfo.color}`}>
-            {language === 'ar' ? diffInfo.ar : diffInfo.en}
-          </span>
+          
+          {/* Calorie burn badge on image */}
+          <div className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-zinc-950/90 border border-emerald-500/30 text-emerald-400 font-extrabold text-[11px] backdrop-blur-sm shadow-sm">
+            <Flame className="w-3 h-3 text-emerald-400 fill-emerald-400/30" />
+            <span>~{calEst.totalCalories} kcal</span>
+          </div>
         </div>
       </div>
 
@@ -142,7 +159,7 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
           </span>
         </div>
 
-        {/* Recommended Sets & Reps Pill */}
+        {/* Recommended Sets & Reps & Accurate Calorie Pill */}
         <div className="flex items-center justify-between bg-zinc-950/40 px-3 py-2 rounded-xl border border-zinc-800/60 text-xs">
           <div className="flex items-center gap-1 text-zinc-300">
             <span className="text-zinc-500 font-medium">{t('sets')}:</span>
@@ -154,11 +171,22 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
             <span className="font-bold text-emerald-400">{exercise.defaultReps}</span>
           </div>
           <div className="w-px h-3 bg-zinc-800" />
-          <div className="flex items-center gap-1 text-zinc-300">
-            <span className="text-zinc-500 font-medium">{t('rest')}:</span>
-            <span className="font-bold text-zinc-200">{exercise.defaultRestSec}s</span>
+          <div className="flex items-center gap-1 text-zinc-300" title={`Calculated for ${profile.weightKg}kg body weight`}>
+            <span className="text-zinc-500 font-medium">{language === 'ar' ? 'الحرق' : 'Burn'}:</span>
+            <span className="font-bold text-amber-400 font-mono">~{calEst.totalCalories} kcal</span>
           </div>
         </div>
+
+        {/* Special Treadmill Incline Launcher for Cardio */}
+        {isTreadmill && (
+          <button
+            onClick={() => setIsTreadmillModalOpen(true)}
+            className="w-full py-1.5 px-3 rounded-xl bg-orange-500/15 hover:bg-orange-500/25 border border-orange-500/30 text-orange-300 text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+          >
+            <TrendingUp className="w-3.5 h-3.5 text-orange-400" />
+            <span>{language === 'ar' ? 'فتح حاسبة السرعة والانحدار' : 'Open Treadmill Calculator'}</span>
+          </button>
+        )}
 
         {/* Action Buttons */}
         <div className="grid grid-cols-2 gap-2 mt-auto pt-1">
@@ -182,3 +210,4 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
     </div>
   );
 };
+

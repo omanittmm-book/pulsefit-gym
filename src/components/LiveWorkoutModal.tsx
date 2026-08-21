@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { DayOfWeek, PlannedExercise, CompletedSet, Exercise } from '../types/fitness';
 import { useLanguage } from '../context/LanguageContext';
 import { useWorkout } from '../context/WorkoutContext';
+import { useUserProfile } from '../context/UserProfileContext';
+import { LaFamiliaLogo } from './LaFamiliaLogo';
 import { 
   X, 
   Play, 
@@ -29,6 +31,7 @@ interface LiveWorkoutModalProps {
 export const LiveWorkoutModal: React.FC<LiveWorkoutModalProps> = ({ day, onClose }) => {
   const { language, t } = useLanguage();
   const { weeklySchedule, selectedDay, addWorkoutLog, exercises: allExercises } = useWorkout();
+  const { profile, getExerciseCalorieEstimate } = useUserProfile();
 
   const targetDay = day || selectedDay;
   const daySchedule = weeklySchedule[targetDay];
@@ -277,19 +280,29 @@ export const LiveWorkoutModal: React.FC<LiveWorkoutModalProps> = ({ day, onClose
             </div>
           </div>
 
-          {/* Center Timer */}
-          <div className="flex items-center gap-2 bg-zinc-900 border border-zinc-800 px-3.5 py-1.5 rounded-2xl">
-            <Clock className="w-4 h-4 text-emerald-400" />
-            <span className="font-mono text-sm sm:text-base font-bold text-zinc-100">
-              {formatTime(elapsedSeconds)}
-            </span>
-            <button
-              onClick={() => setIsTimerRunning(prev => !prev)}
-              className="p-1 text-zinc-400 hover:text-white"
-              title={isTimerRunning ? 'Pause' : 'Resume'}
-            >
-              {isTimerRunning ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
-            </button>
+          {/* Center Timer & Calories */}
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 bg-zinc-900 border border-zinc-800 px-3.5 py-1.5 rounded-2xl">
+              <Clock className="w-4 h-4 text-emerald-400" />
+              <span className="font-mono text-sm sm:text-base font-bold text-zinc-100">
+                {formatTime(elapsedSeconds)}
+              </span>
+              <button
+                onClick={() => setIsTimerRunning(prev => !prev)}
+                className="p-1 text-zinc-400 hover:text-white cursor-pointer"
+                title={isTimerRunning ? 'Pause' : 'Resume'}
+              >
+                {isTimerRunning ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
+              </button>
+            </div>
+
+            {/* Live estimated calorie burn */}
+            <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-emerald-950/40 border border-emerald-500/30 text-emerald-400 font-bold text-xs">
+              <Flame className="w-3.5 h-3.5 text-emerald-400" />
+              <span>
+                {Math.round((6.0 * 3.5 * profile.weightKg / 200) * (elapsedSeconds / 60))} kcal
+              </span>
+            </div>
           </div>
 
           {/* Audio toggle & Close */}
@@ -316,8 +329,10 @@ export const LiveWorkoutModal: React.FC<LiveWorkoutModalProps> = ({ day, onClose
         {/* Finished Summary View */}
         {isFinished && finalStats ? (
           <div className="p-8 sm:p-12 flex flex-col items-center justify-center text-center space-y-6 overflow-y-auto">
-            <div className="w-20 h-20 rounded-3xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 shadow-xl glow-emerald">
-              <Trophy className="w-10 h-10" />
+            <LaFamiliaLogo variant="full" size="lg" />
+
+            <div className="w-16 h-16 rounded-3xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 shadow-xl glow-emerald">
+              <Trophy className="w-8 h-8" />
             </div>
 
             <div className="space-y-2 max-w-md">

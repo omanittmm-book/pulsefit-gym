@@ -17,6 +17,8 @@ export const AddToPlanModal: React.FC<AddToPlanModalProps> = ({ exercise, onClos
   const [sets, setSets] = useState<number>(exercise?.defaultSets || 3);
   const [reps, setReps] = useState<string>(exercise?.defaultReps || '10-12');
   const [rest, setRest] = useState<number>(exercise?.defaultRestSec || 60);
+  const [targetWeight, setTargetWeight] = useState<number>(0);
+  const [notes, setNotes] = useState<string>('');
   const [done, setDone] = useState(false);
 
   if (!exercise) return null;
@@ -32,7 +34,7 @@ export const AddToPlanModal: React.FC<AddToPlanModalProps> = ({ exercise, onClos
   ];
 
   const handleConfirm = () => {
-    addExerciseToDay(targetDay, exercise, sets, reps, rest);
+    addExerciseToDay(targetDay, exercise, sets, reps, rest, targetWeight, notes);
     setDone(true);
     setTimeout(() => {
       onClose();
@@ -105,8 +107,8 @@ export const AddToPlanModal: React.FC<AddToPlanModalProps> = ({ exercise, onClos
           </div>
         </div>
 
-        {/* Sets / Reps / Rest inputs */}
-        <div className="grid grid-cols-3 gap-3 bg-zinc-950 p-3.5 rounded-2xl border border-zinc-800/80">
+        {/* Sets / Reps / Rest / Target Weight inputs */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 bg-zinc-950 p-3.5 rounded-2xl border border-zinc-800/80">
           <div>
             <label className="block text-[11px] font-semibold text-zinc-400 mb-1">{t('sets')}</label>
             <input
@@ -128,6 +130,19 @@ export const AddToPlanModal: React.FC<AddToPlanModalProps> = ({ exercise, onClos
             />
           </div>
           <div>
+            <label className="block text-[11px] font-semibold text-zinc-400 mb-1">{t('targetWeightKg')}</label>
+            <input
+              type="number"
+              step="2.5"
+              min="0"
+              max="500"
+              value={targetWeight || ''}
+              placeholder="0"
+              onChange={(e) => setTargetWeight(Number(e.target.value))}
+              className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-2.5 py-1.5 text-xs text-emerald-400 font-bold text-center focus:ring-1 focus:ring-emerald-500 focus:outline-none"
+            />
+          </div>
+          <div>
             <label className="block text-[11px] font-semibold text-zinc-400 mb-1">{t('rest')} (s)</label>
             <input
               type="number"
@@ -139,6 +154,18 @@ export const AddToPlanModal: React.FC<AddToPlanModalProps> = ({ exercise, onClos
               className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-2.5 py-1.5 text-xs text-zinc-100 font-bold text-center focus:ring-1 focus:ring-emerald-500 focus:outline-none"
             />
           </div>
+        </div>
+
+        {/* Optional Notes */}
+        <div>
+          <label className="block text-[11px] font-semibold text-zinc-400 mb-1">{t('notes')}</label>
+          <input
+            type="text"
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            placeholder={language === 'ar' ? 'ملاحظات الأداء، الوزن المستهدف، دروب سيت...' : 'Performance cues, target dumbbells, drop set...'}
+            className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-200 placeholder-zinc-600 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
+          />
         </div>
 
         {/* Action Button */}

@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { DayOfWeek, PlannedExercise } from '../types/fitness';
+import { DayOfWeek, PlannedExercise, MuscleCategory } from '../types/fitness';
 import { useLanguage } from '../context/LanguageContext';
 import { useWorkout } from '../context/WorkoutContext';
+import { useUserProfile } from '../context/UserProfileContext';
 import { AddExercisePickerModal } from './AddExercisePickerModal';
 import { 
   Calendar, 
@@ -21,16 +22,22 @@ import {
   Weight, 
   Flame,
   CheckCircle2,
-  Edit3
+  Edit3,
+  Sparkles,
+  Check,
+  TrendingUp,
+  Scale
 } from 'lucide-react';
 
 interface WeeklyPlannerProps {
   onOpenTemplates: () => void;
+  onOpenCustomDesigner?: () => void;
   onStartLiveWorkout: (day?: DayOfWeek) => void;
 }
 
 export const WeeklyPlanner: React.FC<WeeklyPlannerProps> = ({
   onOpenTemplates,
+  onOpenCustomDesigner,
   onStartLiveWorkout
 }) => {
   const { language, t } = useLanguage();
@@ -40,6 +47,7 @@ export const WeeklyPlanner: React.FC<WeeklyPlannerProps> = ({
     setSelectedDay, 
     toggleRestDay, 
     updateDayTitle, 
+    updateDayMuscles,
     clearDaySchedule,
     resetEntireWeek,
     removeExerciseFromDay,
@@ -48,6 +56,7 @@ export const WeeklyPlanner: React.FC<WeeklyPlannerProps> = ({
     exportScheduleJson,
     importScheduleJson
   } = useWorkout();
+  const { profile, getScheduleDayCalories, getExerciseCalorieEstimate, setIsProfileModalOpen, setIsTreadmillModalOpen } = useUserProfile();
 
   const [isPickerOpen, setIsPickerOpen] = useState(false);
   const [editingTitle, setEditingTitle] = useState(false);
@@ -63,16 +72,43 @@ export const WeeklyPlanner: React.FC<WeeklyPlannerProps> = ({
     isRestDay: false,
     splitTitleEn: '',
     splitTitleAr: '',
+    targetMuscles: [],
     exercises: []
   };
+
+  const muscleCategoriesList: { key: MuscleCategory; label: string }[] = [
+    { key: 'chest', label: t('chest') },
+    { key: 'back', label: t('back') },
+    { key: 'legs', label: t('legs') },
+    { key: 'shoulders', label: t('shoulders') },
+    { key: 'arms', label: t('arms') },
+    { key: 'core', label: t('core') },
+    { key: 'cardio', label: t('cardio') }
+  ];
 
   // Calculate day stats
   const totalSets = currentSchedule.exercises.reduce((acc, curr) => acc + (curr.sets || 0), 0);
   const estimatedTimeMin = currentSchedule.exercises.reduce((acc, curr) => {
-    // each set approx 45s work + restSec
     const setTime = 45 + (curr.restSeconds || 60);
     return acc + Math.round((curr.sets * setTime) / 60);
   }, 0);
+
+  const totalDayVolumeKg = currentSchedule.exercises.reduce((sum, item) => {
+    const repsAvg = parseInt(item.reps) || 10;
+    const weight = item.targetWeightKg || 0;
+    return sum + (item.sets * repsAvg * weight);
+  }, 0);
+
+  // Compute live accurate calories for this day
+  const dayCalories = getScheduleDayCalories(currentSchedule);
+
+  const toggleDayMuscle = (cat: MuscleCategory) => {
+    const current = currentSchedule.targetMuscles || [];
+    const updated = current.includes(cat)
+      ? current.filter(m => m !== cat)
+      : [...current, cat];
+    updateDayMuscles(selectedDay, updated);
+  };
 
   const handleStartTitleEdit = () => {
     setTitleInput(language === 'ar' ? (currentSchedule.splitTitleAr || '') : (currentSchedule.splitTitleEn || ''));
@@ -142,6 +178,16 @@ export const WeeklyPlanner: React.FC<WeeklyPlannerProps> = ({
 
         {/* Global Toolbar Actions */}
         <div className="flex flex-wrap items-center gap-2">
+          {onOpenCustomDesigner && (
+            <button
+              onClick={onOpenCustomDesigner}
+              className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-zinc-950 text-xs font-black transition-all shadow-md shadow-emerald-500/20 cursor-pointer whitespace-nowrap"
+            >
+              <Sparkles className="w-4 h-4" />
+              <span>{t('customRoutineDesigner')}</span>
+            </button>
+          )}
+
           <button
             onClick={onOpenTemplates}
             className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-bold transition-all border border-zinc-700 cursor-pointer whitespace-nowrap"
@@ -290,7 +336,7 @@ export const WeeklyPlanner: React.FC<WeeklyPlannerProps> = ({
                     />
                     <button
                       onClick={handleSaveTitle}
-                      className="px-3 py-1 rounded-lg bg-emerald-500 text-zinc-950 text-xs font-bold"
+                      className="px-3 py-1 rounded-lg bg-emerald-500 text-zinc-950 text-xs font-bold cursor-pointer"
                     >
                       {t('saveChanges')}
                     </button>
@@ -314,7 +360,7 @@ export const WeeklyPlanner: React.FC<WeeklyPlannerProps> = ({
 
             {/* Quick stats for this day */}
             {!currentSchedule.isRestDay && currentSchedule.exercises.length > 0 && (
-              <div className="flex items-center gap-4 text-xs text-zinc-400 pt-1">
+              <div className="flex flex-wrap items-center gap-3 text-xs text-zinc-400 pt-1">
                 <span className="flex items-center gap-1.5">
                   <Dumbbell className="w-3.5 h-3.5 text-emerald-400" />
                   <span>{currentSchedule.exercises.length} {language === 'ar' ? 'تمارين' : 'Exercises'}</span>
@@ -329,6 +375,15 @@ export const WeeklyPlanner: React.FC<WeeklyPlannerProps> = ({
                   <Clock className="w-3.5 h-3.5 text-amber-400" />
                   <span>≈ {estimatedTimeMin} {t('minutes')}</span>
                 </span>
+                {totalDayVolumeKg > 0 && (
+                  <>
+                    <span>•</span>
+                    <span className="flex items-center gap-1.5 text-emerald-400 font-bold">
+                      <Weight className="w-3.5 h-3.5" />
+                      <span>{t('totalEstimatedVolume')}: {totalDayVolumeKg} {t('kg')}</span>
+                    </span>
+                  </>
+                )}
               </div>
             )}
           </div>
@@ -377,6 +432,77 @@ export const WeeklyPlanner: React.FC<WeeklyPlannerProps> = ({
           </div>
         </div>
 
+        {/* Muscle Selector Chips for Selected Day */}
+        {!currentSchedule.isRestDay && (
+          <div className="flex flex-wrap items-center gap-2 p-3 bg-zinc-950/60 rounded-2xl border border-zinc-800/80">
+            <span className="text-xs font-bold text-zinc-400 flex items-center gap-1.5 shrink-0">
+              <Flame className="w-3.5 h-3.5 text-emerald-400" />
+              <span>{t('selectDayMuscles')}:</span>
+            </span>
+
+            <div className="flex flex-wrap items-center gap-1.5">
+              {muscleCategoriesList.map(cat => {
+                const isSelected = (currentSchedule.targetMuscles || []).includes(cat.key);
+
+                return (
+                  <button
+                    key={cat.key}
+                    type="button"
+                    onClick={() => toggleDayMuscle(cat.key)}
+                    className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                      isSelected
+                        ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-bold'
+                        : 'bg-zinc-900 text-zinc-400 hover:text-zinc-200 border border-zinc-800'
+                    }`}
+                  >
+                    <span>{cat.label}</span>
+                    {isSelected && <Check className="w-3 h-3 text-emerald-400" />}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Day Biometric Calorie & Volume Statistics Strip */}
+        {!currentSchedule.isRestDay && currentSchedule.exercises.length > 0 && (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-3.5 rounded-2xl bg-zinc-950/80 border border-zinc-800/90 text-xs">
+            <div className="flex items-center gap-2.5 p-2 rounded-xl bg-zinc-900/60 border border-zinc-850">
+              <Flame className="w-4 h-4 text-emerald-400 shrink-0" />
+              <div>
+                <span className="text-[10px] text-zinc-500 block">{language === 'ar' ? 'حرق السعرات اليوم' : 'Total Burn (Est)'}</span>
+                <span className="font-extrabold text-emerald-400 font-mono text-sm sm:text-base">{dayCalories} kcal</span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2.5 p-2 rounded-xl bg-zinc-900/60 border border-zinc-850">
+              <Clock className="w-4 h-4 text-sky-400 shrink-0" />
+              <div>
+                <span className="text-[10px] text-zinc-500 block">{language === 'ar' ? 'الوقت التقديري' : 'Est. Duration'}</span>
+                <span className="font-extrabold text-zinc-200 font-mono text-sm sm:text-base">{estimatedTimeMin} min</span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2.5 p-2 rounded-xl bg-zinc-900/60 border border-zinc-850">
+              <Dumbbell className="w-4 h-4 text-amber-400 shrink-0" />
+              <div>
+                <span className="text-[10px] text-zinc-500 block">{language === 'ar' ? 'مجموع الجولات' : 'Total Sets'}</span>
+                <span className="font-extrabold text-zinc-200 font-mono text-sm sm:text-base">{totalSets} sets</span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2.5 p-2 rounded-xl bg-zinc-900/60 border border-zinc-850">
+              <Weight className="w-4 h-4 text-purple-400 shrink-0" />
+              <div>
+                <span className="text-[10px] text-zinc-500 block">{language === 'ar' ? 'الحجم التراكمي' : 'Volume Load'}</span>
+                <span className="font-extrabold text-purple-300 font-mono text-sm sm:text-base">
+                  {totalDayVolumeKg.toLocaleString()} kg
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Exercises List / Rest Day Card */}
         {currentSchedule.isRestDay ? (
           <div className="flex flex-col items-center justify-center p-12 text-center bg-zinc-950/50 rounded-3xl border border-zinc-800 space-y-4">
@@ -403,92 +529,68 @@ export const WeeklyPlanner: React.FC<WeeklyPlannerProps> = ({
             {currentSchedule.exercises.map((item, index) => {
               const isFirst = index === 0;
               const isLast = index === currentSchedule.exercises.length - 1;
+              const isTreadmill = item.exercise.id.includes('treadmill');
+              const exBurn = getExerciseCalorieEstimate(
+                item.exercise,
+                item.sets,
+                item.reps,
+                item.restSeconds,
+                item.targetWeightKg
+              );
 
               return (
                 <div
                   key={item.id}
-                  className="group flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-2xl bg-zinc-950/70 border border-zinc-800 hover:border-zinc-700 transition-all gap-4 shadow-sm"
+                  className="group flex flex-col p-4 rounded-2xl bg-zinc-950/70 border border-zinc-800 hover:border-zinc-700 transition-all gap-3 shadow-sm"
                 >
                   
-                  {/* Left: Thumbnail + Title + Muscle */}
-                  <div className="flex items-center gap-3.5 min-w-0">
-                    {/* Index Badge */}
-                    <div className="flex flex-col items-center justify-center w-7 text-zinc-500 text-xs font-bold shrink-0">
-                      #{index + 1}
-                    </div>
-
-                    <div className="w-14 h-14 rounded-2xl overflow-hidden bg-zinc-900 border border-zinc-800 shrink-0">
-                      <img 
-                        src={item.exercise.imageUrl} 
-                        alt=""
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-
-                    <div className="min-w-0 space-y-0.5">
-                      <h4 className="font-bold text-zinc-100 text-sm sm:text-base truncate group-hover:text-emerald-400 transition-colors">
-                        {language === 'ar' ? item.exercise.nameAr : item.exercise.nameEn}
-                      </h4>
-                      <p className="text-xs text-zinc-400 truncate">
-                        <span className="text-emerald-400 font-semibold">{t(item.exercise.category as any)}</span>
-                        <span> • </span>
-                        <span>{language === 'ar' ? item.exercise.primaryMuscleAr : item.exercise.primaryMuscleEn}</span>
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Right: Sets/Reps/Weight adjusters + Actions */}
-                  <div className="flex flex-wrap items-center justify-between sm:justify-end gap-3 pt-2 sm:pt-0 border-t sm:border-t-0 border-zinc-850">
-                    
-                    {/* Sets modifier */}
-                    <div className="flex items-center bg-zinc-900 rounded-xl border border-zinc-800 p-1">
-                      <button
-                        type="button"
-                        onClick={() => updatePlannedExercise(selectedDay, item.id, { sets: Math.max(1, item.sets - 1) })}
-                        className="w-7 h-7 rounded-lg bg-zinc-950 text-zinc-400 hover:text-white flex items-center justify-center font-bold text-sm"
-                      >
-                        -
-                      </button>
-                      <div className="px-2.5 text-center">
-                        <span className="text-xs font-black text-emerald-400">{item.sets}</span>
-                        <span className="text-[10px] text-zinc-500 block -mt-0.5">{t('sets')}</span>
+                  {/* Top line: Index + Thumbnail + Title + Calorie Burn + Reorder/Delete */}
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="flex flex-col items-center justify-center w-6 text-zinc-500 text-xs font-bold shrink-0">
+                        #{index + 1}
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => updatePlannedExercise(selectedDay, item.id, { sets: Math.min(10, item.sets + 1) })}
-                        className="w-7 h-7 rounded-lg bg-zinc-950 text-zinc-400 hover:text-white flex items-center justify-center font-bold text-sm"
-                      >
-                        +
-                      </button>
+
+                      <div className="w-12 h-12 rounded-xl overflow-hidden bg-zinc-900 border border-zinc-800 shrink-0 relative">
+                        <img 
+                          src={item.exercise.imageUrl} 
+                          alt=""
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+
+                      <div className="min-w-0 space-y-0.5">
+                        <div className="flex items-center gap-2">
+                          <h4 className="font-bold text-zinc-100 text-xs sm:text-sm truncate group-hover:text-emerald-400 transition-colors">
+                            {language === 'ar' ? item.exercise.nameAr : item.exercise.nameEn}
+                          </h4>
+                          <span className="flex items-center gap-1 text-[10px] font-extrabold px-2 py-0.5 rounded-md bg-emerald-950/60 border border-emerald-800/40 text-emerald-400 font-mono shrink-0">
+                            <Flame className="w-3 h-3 text-emerald-400" />
+                            <span>~{exBurn.totalCalories} kcal</span>
+                          </span>
+                        </div>
+                        <p className="text-xs text-zinc-400 truncate">
+                          <span className="text-emerald-400 font-semibold">{t(item.exercise.category as any)}</span>
+                          <span> • </span>
+                          <span>{language === 'ar' ? item.exercise.primaryMuscleAr : item.exercise.primaryMuscleEn}</span>
+                        </p>
+                      </div>
                     </div>
 
-                    {/* Reps input */}
-                    <div className="flex flex-col">
-                      <label className="text-[10px] text-zinc-500 font-semibold mb-0.5">{t('reps')}</label>
-                      <input
-                        type="text"
-                        value={item.reps}
-                        onChange={(e) => updatePlannedExercise(selectedDay, item.id, { reps: e.target.value })}
-                        className="w-16 bg-zinc-900 border border-zinc-800 rounded-xl px-2 py-1 text-xs text-zinc-100 font-bold text-center focus:ring-1 focus:ring-emerald-500 focus:outline-none"
-                      />
-                    </div>
+                    {/* Reorder and Delete & Treadmill Engine */}
+                    <div className="flex items-center gap-1 shrink-0">
+                      {isTreadmill && (
+                        <button
+                          type="button"
+                          onClick={() => setIsTreadmillModalOpen(true)}
+                          className="px-2 py-1 rounded-lg bg-orange-950/50 hover:bg-orange-900/60 border border-orange-700/50 text-orange-300 text-[10px] font-bold flex items-center gap-1 transition-colors cursor-pointer mr-1"
+                          title="Open Treadmill Calculator"
+                        >
+                          <TrendingUp className="w-3 h-3" />
+                          <span className="hidden sm:inline">%Incline</span>
+                        </button>
+                      )}
 
-                    {/* Rest input */}
-                    <div className="flex flex-col">
-                      <label className="text-[10px] text-zinc-500 font-semibold mb-0.5">{t('rest')} (s)</label>
-                      <input
-                        type="number"
-                        step="15"
-                        min="15"
-                        max="300"
-                        value={item.restSeconds}
-                        onChange={(e) => updatePlannedExercise(selectedDay, item.id, { restSeconds: Number(e.target.value) })}
-                        className="w-16 bg-zinc-900 border border-zinc-800 rounded-xl px-2 py-1 text-xs text-zinc-100 font-bold text-center focus:ring-1 focus:ring-emerald-500 focus:outline-none"
-                      />
-                    </div>
-
-                    {/* Reorder Buttons */}
-                    <div className="flex items-center gap-1">
                       <button
                         disabled={isFirst}
                         onClick={() => reorderExercises(selectedDay, index, index - 1)}
@@ -519,8 +621,108 @@ export const WeeklyPlanner: React.FC<WeeklyPlannerProps> = ({
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>
+                  </div>
+
+                  {/* Configuration Controls Bar: Sets | Reps | Target Weight (Kg) | Rest (s) */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-2 border-t border-zinc-850">
+                    
+                    {/* Sets modifier */}
+                    <div>
+                      <label className="text-[10px] text-zinc-500 font-semibold mb-1 block">{t('sets')}</label>
+                      <div className="flex items-center bg-zinc-900 rounded-xl border border-zinc-800 p-1">
+                        <button
+                          type="button"
+                          onClick={() => updatePlannedExercise(selectedDay, item.id, { sets: Math.max(1, item.sets - 1) })}
+                          className="w-6 h-6 rounded-lg bg-zinc-950 text-zinc-400 hover:text-white flex items-center justify-center font-bold text-xs"
+                        >
+                          -
+                        </button>
+                        <div className="flex-1 text-center font-black text-xs text-emerald-400">
+                          {item.sets}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => updatePlannedExercise(selectedDay, item.id, { sets: Math.min(10, item.sets + 1) })}
+                          className="w-6 h-6 rounded-lg bg-zinc-950 text-zinc-400 hover:text-white flex items-center justify-center font-bold text-xs"
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Reps input */}
+                    <div>
+                      <label className="text-[10px] text-zinc-500 font-semibold mb-1 block">{t('reps')}</label>
+                      <input
+                        type="text"
+                        value={item.reps}
+                        onChange={(e) => updatePlannedExercise(selectedDay, item.id, { reps: e.target.value })}
+                        className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-2.5 py-1.5 text-xs text-zinc-100 font-bold text-center focus:ring-1 focus:ring-emerald-500 focus:outline-none"
+                      />
+                    </div>
+
+                    {/* Target Weight (kg) */}
+                    <div>
+                      <label className="text-[10px] text-zinc-500 font-semibold mb-1 block flex items-center justify-between">
+                        <span>{t('targetWeightKg')}</span>
+                        {item.targetWeightKg ? <span className="text-emerald-400 font-mono text-[9px]">{item.targetWeightKg}kg</span> : null}
+                      </label>
+                      <div className="flex items-center bg-zinc-900 rounded-xl border border-zinc-800 p-0.5">
+                        <button
+                          type="button"
+                          onClick={() => updatePlannedExercise(selectedDay, item.id, { targetWeightKg: Math.max(0, (item.targetWeightKg || 0) - 2.5) })}
+                          className="w-5 h-6 rounded bg-zinc-950 text-zinc-400 hover:text-white text-[10px] font-bold flex items-center justify-center cursor-pointer"
+                          title="-2.5 kg"
+                        >
+                          -
+                        </button>
+                        <input
+                          type="number"
+                          step="2.5"
+                          min="0"
+                          value={item.targetWeightKg || ''}
+                          placeholder="0"
+                          onChange={(e) => updatePlannedExercise(selectedDay, item.id, { targetWeightKg: Number(e.target.value) })}
+                          className="w-full bg-transparent text-xs text-emerald-400 font-bold text-center focus:outline-none"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => updatePlannedExercise(selectedDay, item.id, { targetWeightKg: (item.targetWeightKg || 0) + 2.5 })}
+                          className="w-5 h-6 rounded bg-zinc-950 text-zinc-400 hover:text-white text-[10px] font-bold flex items-center justify-center cursor-pointer"
+                          title="+2.5 kg"
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Rest input */}
+                    <div>
+                      <label className="text-[10px] text-zinc-500 font-semibold mb-1 block">{t('rest')} (s)</label>
+                      <input
+                        type="number"
+                        step="15"
+                        min="15"
+                        max="300"
+                        value={item.restSeconds}
+                        onChange={(e) => updatePlannedExercise(selectedDay, item.id, { restSeconds: Number(e.target.value) })}
+                        className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-2.5 py-1.5 text-xs text-zinc-100 font-bold text-center focus:ring-1 focus:ring-emerald-500 focus:outline-none"
+                      />
+                    </div>
 
                   </div>
+
+                  {/* Optional Note row */}
+                  <div>
+                    <input
+                      type="text"
+                      value={item.notes || ''}
+                      onChange={(e) => updatePlannedExercise(selectedDay, item.id, { notes: e.target.value })}
+                      placeholder={language === 'ar' ? 'ملاحظات الأداء، الوزن المستهدف، دروب سيت...' : 'Performance cues, target dumbbells, drop set...'}
+                      className="w-full bg-zinc-900/50 border border-zinc-850 rounded-xl px-3 py-1 text-xs text-zinc-300 placeholder-zinc-600 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
+                    />
+                  </div>
+
                 </div>
               );
             })}
@@ -552,21 +754,23 @@ export const WeeklyPlanner: React.FC<WeeklyPlannerProps> = ({
                 <Plus className="w-4 h-4" />
                 <span>{t('addExerciseToDay')}</span>
               </button>
-
-              <button
-                onClick={onOpenTemplates}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-bold transition-all cursor-pointer"
-              >
-                <Layers className="w-4 h-4 text-emerald-400" />
-                <span>{t('loadTemplate')}</span>
-              </button>
+              
+              {onOpenCustomDesigner && (
+                <button
+                  onClick={onOpenCustomDesigner}
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-750 text-zinc-200 text-xs font-bold transition-all border border-zinc-700 cursor-pointer"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>{t('customRoutineDesigner')}</span>
+                </button>
+              )}
             </div>
           </div>
         )}
 
       </div>
 
-      {/* Exercise Picker Modal */}
+      {/* Picker Modal */}
       {isPickerOpen && (
         <AddExercisePickerModal
           day={selectedDay}

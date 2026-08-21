@@ -322,5 +322,175 @@ export const WORKOUT_TEMPLATES: WorkoutTemplate[] = [
         exerciseIds: []
       }
     }
+  },
+  {
+    id: 'arnold-split-6day',
+    nameEn: 'Arnold Schwarzenegger Classic Split (6-Day)',
+    nameAr: 'نظام أرنولد شوارزنيجر الكلاسيكي (6 أيام)',
+    descriptionEn: 'Antagonistic superset friendly split: Chest & Back, Shoulders & Arms, and Legs. The favorite of the Golden Era.',
+    descriptionAr: 'النظام الأسطوري للعصر الذهبي: صدر وظهر معاً في يوم واحد، أكتاف وذراعين، ثم أرجل، بتكرار مرتين أسبوعياً لضخامة خرافية.',
+    difficulty: 'advanced',
+    daysPerWeek: 6,
+    tags: ['Golden Era', 'Hypertrophy', '6 Days'],
+    schedule: {
+      sat: {
+        isRestDay: false,
+        splitTitleEn: 'Chest & Back (Antagonist Hypertrophy)',
+        splitTitleAr: 'صدر وظهر (عضلات متقابلة)',
+        targetMuscles: ['chest', 'back'],
+        exerciseIds: [
+          { exerciseId: 'bench-press-barbell', sets: 4, reps: '8-10', restSec: 90, targetWeightKg: 70 },
+          { exerciseId: 'bent-over-barbell-row', sets: 4, reps: '8-10', restSec: 90, targetWeightKg: 60 },
+          { exerciseId: 'incline-dumbbell-press', sets: 3, reps: '10-12', restSec: 75, targetWeightKg: 24 },
+          { exerciseId: 'lat-pulldown', sets: 3, reps: '10-12', restSec: 75, targetWeightKg: 55 },
+          { exerciseId: 'cable-chest-flyes', sets: 3, reps: '12-15', restSec: 60, targetWeightKg: 15 }
+        ]
+      },
+      sun: {
+        isRestDay: false,
+        splitTitleEn: 'Shoulders & Arms (Biceps/Triceps Blast)',
+        splitTitleAr: 'أكتاف وذراعين (باي، تراي، وترابيس)',
+        targetMuscles: ['shoulders', 'arms'],
+        exerciseIds: [
+          { exerciseId: 'overhead-barbell-press', sets: 4, reps: '8-10', restSec: 90, targetWeightKg: 45 },
+          { exerciseId: 'lateral-dumbbell-raises', sets: 4, reps: '12-15', restSec: 60, targetWeightKg: 10 },
+          { exerciseId: 'barbell-bicep-curl', sets: 4, reps: '10-12', restSec: 60, targetWeightKg: 30 },
+          { exerciseId: 'skull-crushers-ez-bar', sets: 4, reps: '10-12', restSec: 60, targetWeightKg: 25 },
+          { exerciseId: 'hammer-curls-dumbbell', sets: 3, reps: '12-15', restSec: 60, targetWeightKg: 14 }
+        ]
+      },
+      mon: {
+        isRestDay: false,
+        splitTitleEn: 'Legs & Lower Abs',
+        splitTitleAr: 'أرجل وبطن سفلي',
+        targetMuscles: ['legs', 'core'],
+        exerciseIds: [
+          { exerciseId: 'barbell-back-squat', sets: 4, reps: '6-8', restSec: 120, targetWeightKg: 85 },
+          { exerciseId: 'romanian-deadlift-dumbbell', sets: 3, reps: '10-12', restSec: 90, targetWeightKg: 28 },
+          { exerciseId: 'leg-press-machine', sets: 4, reps: '10-12', restSec: 90, targetWeightKg: 160 },
+          { exerciseId: 'standing-calf-raises', sets: 4, reps: '15-20', restSec: 45, targetWeightKg: 50 },
+          { exerciseId: 'hanging-leg-raises', sets: 3, reps: '15', restSec: 45 }
+        ]
+      },
+      tue: {
+        isRestDay: false,
+        splitTitleEn: 'Chest & Back II',
+        splitTitleAr: 'صدر وظهر (الحصة الثانية)',
+        targetMuscles: ['chest', 'back'],
+        exerciseIds: [
+          { exerciseId: 'incline-dumbbell-press', sets: 4, reps: '8-10', restSec: 75, targetWeightKg: 26 },
+          { exerciseId: 'seated-cable-row', sets: 4, reps: '10-12', restSec: 75, targetWeightKg: 60 },
+          { exerciseId: 'chest-dips', sets: 3, reps: '10-12', restSec: 75 },
+          { exerciseId: 'lat-pulldown', sets: 3, reps: '10-12', restSec: 60, targetWeightKg: 55 }
+        ]
+      },
+      wed: {
+        isRestDay: false,
+        splitTitleEn: 'Shoulders & Arms II',
+        splitTitleAr: 'أكتاف وذراعين (الحصة الثانية)',
+        targetMuscles: ['shoulders', 'arms'],
+        exerciseIds: [
+          { exerciseId: 'arnold-press-dumbbell', sets: 4, reps: '10-12', restSec: 75, targetWeightKg: 18 },
+          { exerciseId: 'rear-delt-face-pulls', sets: 4, reps: '12-15', restSec: 60, targetWeightKg: 25 },
+          { exerciseId: 'tricep-rope-pushdown', sets: 3, reps: '12-15', restSec: 60, targetWeightKg: 25 },
+          { exerciseId: 'incline-dumbbell-bicep-curl', sets: 3, reps: '10-12', restSec: 60, targetWeightKg: 12 }
+        ]
+      },
+      thu: {
+        isRestDay: false,
+        splitTitleEn: 'Legs & Calves II',
+        splitTitleAr: 'أرجل وسمانة (الحصة الثانية)',
+        targetMuscles: ['legs', 'core'],
+        exerciseIds: [
+          { exerciseId: 'deadlift-conventional', sets: 3, reps: '5-6', restSec: 120, targetWeightKg: 100 },
+          { exerciseId: 'leg-extension-machine', sets: 3, reps: '12-15', restSec: 60, targetWeightKg: 50 },
+          { exerciseId: 'standing-calf-raises', sets: 4, reps: '15-20', restSec: 45, targetWeightKg: 50 },
+          { exerciseId: 'cable-kneeling-crunch', sets: 3, reps: '15-20', restSec: 60, targetWeightKg: 35 }
+        ]
+      },
+      fri: {
+        isRestDay: true,
+        splitTitleEn: 'Complete Recovery Day',
+        splitTitleAr: 'يوم راحة كامل',
+        exerciseIds: []
+      }
+    }
+  },
+  {
+    id: 'sculpt-tone-4day',
+    nameEn: 'Glute, Core & Upper Sculpt (4-Day Tone)',
+    nameAr: 'جدول نحت وتنشيف (أرداف، بطن، وشد الجسم 4 أيام)',
+    descriptionEn: 'Focused on glute development, core tightness, posture, and full-body conditioning.',
+    descriptionAr: 'برنامج مصمم لتنسيق القوام، تقوية عضلات الجذع والبطن، وعزل عضلات الأرداف والفخذين مع شد الجزء العلوي.',
+    difficulty: 'beginner',
+    daysPerWeek: 4,
+    tags: ['Toning', 'Glutes & Core', '4 Days'],
+    schedule: {
+      sat: {
+        isRestDay: false,
+        splitTitleEn: 'Lower Body & Glute Focus',
+        splitTitleAr: 'الجزء السفلي والتركيز على الأرداف',
+        targetMuscles: ['legs'],
+        exerciseIds: [
+          { exerciseId: 'barbell-back-squat', sets: 4, reps: '10-12', restSec: 90, targetWeightKg: 40 },
+          { exerciseId: 'romanian-deadlift-dumbbell', sets: 4, reps: '10-12', restSec: 75, targetWeightKg: 16 },
+          { exerciseId: 'leg-press-machine', sets: 3, reps: '12-15', restSec: 75, targetWeightKg: 80 },
+          { exerciseId: 'standing-calf-raises', sets: 3, reps: '20', restSec: 45, targetWeightKg: 30 }
+        ]
+      },
+      sun: {
+        isRestDay: false,
+        splitTitleEn: 'Upper Body Tone & Posture',
+        splitTitleAr: 'شد الجزء العلوي واستقامة الظهر',
+        targetMuscles: ['back', 'shoulders', 'chest'],
+        exerciseIds: [
+          { exerciseId: 'lat-pulldown', sets: 4, reps: '12-15', restSec: 60, targetWeightKg: 35 },
+          { exerciseId: 'incline-dumbbell-press', sets: 3, reps: '12-15', restSec: 60, targetWeightKg: 12 },
+          { exerciseId: 'lateral-dumbbell-raises', sets: 3, reps: '15', restSec: 45, targetWeightKg: 6 },
+          { exerciseId: 'rear-delt-face-pulls', sets: 3, reps: '15', restSec: 45, targetWeightKg: 20 }
+        ]
+      },
+      mon: {
+        isRestDay: true,
+        splitTitleEn: 'Rest & Stretch',
+        splitTitleAr: 'راحة واستطالة',
+        exerciseIds: []
+      },
+      tue: {
+        isRestDay: false,
+        splitTitleEn: 'Hamstrings, Glutes & Calves',
+        splitTitleAr: 'فخذ خلفي، أرداف وسمانة',
+        targetMuscles: ['legs'],
+        exerciseIds: [
+          { exerciseId: 'romanian-deadlift-dumbbell', sets: 4, reps: '10-12', restSec: 75, targetWeightKg: 18 },
+          { exerciseId: 'leg-extension-machine', sets: 3, reps: '15', restSec: 60, targetWeightKg: 35 },
+          { exerciseId: 'standing-calf-raises', sets: 4, reps: '20', restSec: 45, targetWeightKg: 30 }
+        ]
+      },
+      wed: {
+        isRestDay: false,
+        splitTitleEn: 'Abs, Core & High-Intensity Cardio',
+        splitTitleAr: 'نحت عضلات البطن والجذع وكارديو',
+        targetMuscles: ['core', 'cardio'],
+        exerciseIds: [
+          { exerciseId: 'hanging-leg-raises', sets: 3, reps: '15', restSec: 45 },
+          { exerciseId: 'plank-hold', sets: 3, reps: '60s', restSec: 45 },
+          { exerciseId: 'cable-woodchoppers', sets: 3, reps: '15', restSec: 45, targetWeightKg: 15 },
+          { exerciseId: 'cable-kneeling-crunch', sets: 3, reps: '20', restSec: 45, targetWeightKg: 25 }
+        ]
+      },
+      thu: {
+        isRestDay: true,
+        splitTitleEn: 'Rest Day',
+        splitTitleAr: 'يوم راحة',
+        exerciseIds: []
+      },
+      fri: {
+        isRestDay: true,
+        splitTitleEn: 'Rest Day',
+        splitTitleAr: 'يوم راحة',
+        exerciseIds: []
+      }
+    }
   }
 ];

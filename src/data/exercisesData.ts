@@ -827,6 +827,72 @@ export const EXERCISES_DATA: Exercise[] = [
     tipsAr: ['القوة تأتي من انفجار الحوض للأمام وليس برفع الوزن بالذراعين.']
   },
   {
+    id: 'treadmill-incline-walk-run',
+    nameEn: 'Treadmill Incline Running & Power Walk',
+    nameAr: 'الركض والمشي على السير الكهربائي بالانحدار',
+    category: 'cardio',
+    primaryMuscleEn: 'Cardiovascular Conditioning, Calves & Glutes',
+    primaryMuscleAr: 'لياقة وصحة القلب، السمانة وعضلات الفخذ والمؤخرة',
+    secondaryMusclesEn: ['Quads', 'Hamstrings', 'Core'],
+    secondaryMusclesAr: ['الفخذ الأمامي', 'أوتار الركبة', 'عضلات الجذع'],
+    equipment: 'machine',
+    difficulty: 'beginner',
+    imageUrl: 'https://images.unsplash.com/photo-1538805060514-97d9cc17730c?w=700&auto=format&fit=crop&q=80',
+    defaultSets: 1,
+    defaultReps: '30 min',
+    defaultRestSec: 0,
+    instructionsEn: [
+      'Step onto the treadmill deck with safety clip attached and select your speed and incline.',
+      'Maintain an upright posture, keeping eyes forward and shoulders relaxed.',
+      'Land softly on midfoot rather than slapping hard on your heels.',
+      'Gradually increase incline (e.g. 4-12%) to maximize caloric expenditure without excess joint impact.'
+    ],
+    instructionsAr: [
+      'اصعد على منصة السير الكهربائي وثبت مشبك الأمان، ثم اختر السرعة والانحدار المناسب.',
+      'حافظ على استقامة القامة، واسترخاء الكتفين وتوجيه النظر للأمام.',
+      'اهبط بنعومة على منتصف باطن القدم لتفادي الصدمات الشديدة على المفاصل.',
+      'ارفع نسبة الانحدار تدريجياً (مثل 4% إلى 12%) لمضاعفة حرق الدهون وحماية الركبتين.'
+    ],
+    tipsEn: [
+      'Incline walking (like 12% incline at 5 km/h) burns similar calories to running with much less impact.',
+      'Avoid holding tightly to the handrails as it reduces core engagement and calorie burn.'
+    ],
+    tipsAr: [
+      'المشي مع الانحدار (مثل انحدار 12% وسرعة 5 كم/س) يحرق سعرات مماثلة للجري وبضغط أقل على المفاصل.',
+      'تجنب التمسك الشديد بمقابض السير لأن التمسك يقلل من تشغيل الجذع ويخفض السعرات المحروقة.'
+    ]
+  },
+  {
+    id: 'treadmill-hiit-sprints',
+    nameEn: 'Treadmill HIIT Sprint Intervals',
+    nameAr: 'تمارين السبرنت المتقطع عالي الكثافة على السير (HIIT)',
+    category: 'cardio',
+    primaryMuscleEn: 'Anaerobic Endurance, Quads & Glutes',
+    primaryMuscleAr: 'القدرة اللاهوائية وانفجار السرعة، الفخذ والمؤخرة',
+    secondaryMusclesEn: ['Calves', 'Core', 'Hamstrings'],
+    secondaryMusclesAr: ['السمانة', 'البطن والجذع', 'الفخذ الخلفي'],
+    equipment: 'machine',
+    difficulty: 'advanced',
+    imageUrl: 'https://images.unsplash.com/photo-1434682881908-b43d0467b798?w=700&auto=format&fit=crop&q=80',
+    defaultSets: 6,
+    defaultReps: '30s sprint / 60s walk',
+    defaultRestSec: 60,
+    instructionsEn: [
+      'Warm up with 5 minutes of easy jogging.',
+      'Increase speed to high intensity (12-16 km/h) and sprint at 100% effort for 30 seconds.',
+      'Safely straddle the treadmill sides or reduce speed to 4 km/h for a 60-second recovery walk.',
+      'Repeat for 6-10 rounds and cool down.'
+    ],
+    instructionsAr: [
+      'ابدأ بالإحماء بالمشي السريع أو الهرولة الخفيفة لمدة 5 دقائق.',
+      'ارفع السرعة إلى أقصى طاقة (12-16 كم/س) واجرِ بأقصى قوة (سبرنت) لمدة 30 ثانية.',
+      'اخفض السرعة إلى 4 كم/س أو اقفز بأمان على الجانبين للاستشفاء لمدة 60 ثانية.',
+      'كرر الجولات من 6 إلى 10 مرات ثم اختم بتهدئة خفيفة.'
+    ],
+    tipsEn: ['Creates an intense EPOC (afterburn effect) burning calories for hours after training.'],
+    tipsAr: ['يولد تأثيراً كبيراً لحرق الدهون لما بعد التمرين (EPOC) ويستمر في حرق السعرات لساعات.']
+  },
+  {
     id: 'rowing-machine-intervals',
     nameEn: 'Rowing Machine High Intensity Intervals',
     nameAr: 'تمرين جهاز التجديف الهوائي المتقطع (روينغ)',

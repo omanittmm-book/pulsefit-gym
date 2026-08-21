@@ -5,6 +5,7 @@ import { useWorkout } from '../context/WorkoutContext';
 import { ExerciseCard } from './ExerciseCard';
 import { ExerciseDetailModal } from './ExerciseDetailModal';
 import { AddToPlanModal } from './AddToPlanModal';
+import { LaFamiliaLogo } from './LaFamiliaLogo';
 import { 
   Search, 
   Filter, 
@@ -107,11 +108,11 @@ export const ExerciseDirectory: React.FC<ExerciseDirectoryProps> = ({
     <div className="space-y-8">
       
       {/* Hero Banner with Gym Aesthetic */}
-      <div className="relative rounded-3xl overflow-hidden border border-zinc-800 bg-gradient-to-br from-zinc-900 via-zinc-900/90 to-zinc-950 p-6 sm:p-8 lg:p-10 shadow-2xl">
+      <div className="relative rounded-3xl overflow-hidden border border-zinc-800 bg-gradient-to-br from-zinc-900 via-zinc-900/90 to-zinc-950 p-6 sm:p-8 lg:p-10 shadow-2xl flex flex-col md:flex-row items-center justify-between gap-8">
         <div className="absolute top-0 right-0 -mt-12 -mr-12 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute bottom-0 left-0 -mb-12 -ml-12 w-80 h-80 bg-sky-500/10 rounded-full blur-3xl pointer-events-none" />
 
-        <div className="relative z-10 max-w-3xl space-y-4">
+        <div className="relative z-10 max-w-2xl space-y-4">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-bold uppercase tracking-wider">
             <Sparkles className="w-3.5 h-3.5" />
             <span>{language === 'ar' ? 'أكبر دليل تمارين تفاعلي باللغتين' : 'Interactive Bilingual Exercise Directory'}</span>
@@ -120,18 +121,18 @@ export const ExerciseDirectory: React.FC<ExerciseDirectoryProps> = ({
           <h1 className="text-2xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight leading-tight">
             {language === 'ar' ? (
               <>
-                ابنِ جسمك باحترافية مع <span className="text-emerald-400">فتنس بلس</span>
+                ابنِ قوتك وجسمك مع <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-300 to-teal-400">LA FAMILIA</span>
               </>
             ) : (
               <>
-                Master Your Lifts with <span className="text-emerald-400">PulseFit</span> Database
+                Elevate Your Training with <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-300 to-teal-400">LA FAMILIA</span>
               </>
             )}
           </h1>
 
-          <p className="text-zinc-400 text-sm sm:text-base max-w-2xl leading-relaxed">
+          <p className="text-zinc-400 text-sm sm:text-base max-w-xl leading-relaxed">
             {language === 'ar' 
-              ? 'تصفح أكثر من 30 تمريناً مشروحاً بدقة مع زوايا الأداء، العضلات المستهدفة، وتفاصيل المجموعات والتكرارات لتضمينها بجدولك.'
+              ? 'تصفح كافة التمارين مع زوايا الأداء، العضلات المستهدفة، وتفاصيل المجموعات والتكرارات لتضمينها بجدولك التدريبي.'
               : 'Explore our evidence-based exercise library with target muscle activations, proper execution steps, and sets/reps guidance.'}
           </p>
 
@@ -156,6 +157,11 @@ export const ExerciseDirectory: React.FC<ExerciseDirectoryProps> = ({
               )}
             </div>
           </div>
+        </div>
+
+        {/* Hero Logo Emblem Artwork */}
+        <div className="relative z-10 hidden md:flex shrink-0 p-6 rounded-3xl bg-zinc-950/70 border border-zinc-800/80 shadow-2xl">
+          <LaFamiliaLogo variant="full" size="lg" />
         </div>
       </div>
 

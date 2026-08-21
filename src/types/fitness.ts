@@ -65,6 +65,7 @@ export interface DaySchedule {
   isRestDay: boolean;
   splitTitleEn: string;
   splitTitleAr: string;
+  targetMuscles?: MuscleCategory[];
   exercises: PlannedExercise[];
 }
 
@@ -81,8 +82,10 @@ export interface WorkoutTemplate {
     isRestDay: boolean;
     splitTitleEn: string;
     splitTitleAr: string;
-    exerciseIds: { exerciseId: string; sets: number; reps: string; restSec?: number }[];
+    targetMuscles?: MuscleCategory[];
+    exerciseIds: { exerciseId: string; sets: number; reps: string; restSec?: number; targetWeightKg?: number; notes?: string }[];
   }>;
+  isCustom?: boolean;
 }
 
 export interface CompletedSet {

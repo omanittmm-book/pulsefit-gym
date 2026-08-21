@@ -5,7 +5,8 @@ import {
   DaySchedule, 
   DayOfWeek, 
   WorkoutTemplate, 
-  WorkoutLogItem 
+  WorkoutLogItem,
+  MuscleCategory
 } from '../types/fitness';
 import { EXERCISES_DATA } from '../data/exercisesData';
 import { WORKOUT_TEMPLATES } from '../data/templatesData';
@@ -20,15 +21,23 @@ interface WorkoutContextType {
   isFavorite: (exerciseId: string) => boolean;
   
   // Schedule manipulation
-  addExerciseToDay: (day: DayOfWeek, exercise: Exercise, sets?: number, reps?: string, restSec?: number) => void;
+  addExerciseToDay: (day: DayOfWeek, exercise: Exercise, sets?: number, reps?: string, restSec?: number, targetWeightKg?: number, notes?: string) => void;
   removeExerciseFromDay: (day: DayOfWeek, plannedId: string) => void;
   reorderExercises: (day: DayOfWeek, fromIndex: number, toIndex: number) => void;
   updatePlannedExercise: (day: DayOfWeek, plannedId: string, updates: Partial<PlannedExercise>) => void;
   toggleRestDay: (day: DayOfWeek) => void;
   updateDayTitle: (day: DayOfWeek, titleEn: string, titleAr: string) => void;
+  updateDayMuscles: (day: DayOfWeek, muscles: MuscleCategory[]) => void;
   clearDaySchedule: (day: DayOfWeek) => void;
   resetEntireWeek: () => void;
   applyTemplate: (templateId: string) => boolean;
+  applyFullSchedule: (newSchedule: Record<DayOfWeek, DaySchedule>) => void;
+
+  // Custom Templates
+  customTemplates: WorkoutTemplate[];
+  allTemplates: WorkoutTemplate[];
+  saveCustomTemplate: (template: Omit<WorkoutTemplate, 'id' | 'isCustom'>) => void;
+  deleteCustomTemplate: (id: string) => void;
 
   // Custom Exercises
   addCustomExercise: (newEx: Omit<Exercise, 'id' | 'isCustom'>) => void;
@@ -93,7 +102,8 @@ const getInitialSchedule = (allExercises: Exercise[]): Record<DayOfWeek, DaySche
             sets: item.sets,
             reps: item.reps,
             restSeconds: item.restSec || ex.defaultRestSec,
-            targetWeightKg: 0
+            targetWeightKg: (item as any).targetWeightKg || 0,
+            notes: (item as any).notes || ''
           });
         }
       });
@@ -106,6 +116,7 @@ const getInitialSchedule = (allExercises: Exercise[]): Record<DayOfWeek, DaySche
       isRestDay: templateDay ? templateDay.isRestDay : false,
       splitTitleEn: templateDay ? templateDay.splitTitleEn : '',
       splitTitleAr: templateDay ? templateDay.splitTitleAr : '',
+      targetMuscles: templateDay ? templateDay.targetMuscles : [],
       exercises: dayExercises
     };
   });
@@ -125,7 +136,17 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
     return [];
   });
 
+  // Custom templates state
+  const [customTemplates, setCustomTemplates] = useState<WorkoutTemplate[]>(() => {
+    const saved = localStorage.getItem('pulsefit_custom_templates');
+    if (saved) {
+      try { return JSON.parse(saved); } catch { return []; }
+    }
+    return [];
+  });
+
   const exercises = [...EXERCISES_DATA, ...customExercises];
+  const allTemplates = [...WORKOUT_TEMPLATES, ...customTemplates];
 
   // Schedule state
   const [weeklySchedule, setWeeklySchedule] = useState<Record<DayOfWeek, DaySchedule>>(() => 
@@ -178,6 +199,11 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
     localStorage.setItem('pulsefit_custom_exercises', JSON.stringify(customExercises));
   }, [customExercises]);
 
+  // Persist custom templates
+  useEffect(() => {
+    localStorage.setItem('pulsefit_custom_templates', JSON.stringify(customTemplates));
+  }, [customTemplates]);
+
   // Persist favorites
   useEffect(() => {
     localStorage.setItem('pulsefit_favorites', JSON.stringify(favorites));
@@ -203,7 +229,9 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
     exercise: Exercise, 
     sets?: number, 
     reps?: string, 
-    restSec?: number
+    restSec?: number,
+    targetWeightKg?: number,
+    notes?: string
   ) => {
     const newPlanned: PlannedExercise = {
       id: `${day}-${exercise.id}-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
@@ -212,7 +240,8 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
       sets: sets || exercise.defaultSets || 3,
       reps: reps || exercise.defaultReps || '10-12',
       restSeconds: restSec || exercise.defaultRestSec || 60,
-      targetWeightKg: 0
+      targetWeightKg: targetWeightKg || 0,
+      notes: notes || ''
     };
 
     setWeeklySchedule(prev => ({
@@ -285,6 +314,16 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }));
   };
 
+  const updateDayMuscles = (day: DayOfWeek, muscles: MuscleCategory[]) => {
+    setWeeklySchedule(prev => ({
+      ...prev,
+      [day]: {
+        ...prev[day],
+        targetMuscles: muscles
+      }
+    }));
+  };
+
   const clearDaySchedule = (day: DayOfWeek) => {
     setWeeklySchedule(prev => ({
       ...prev,
@@ -305,6 +344,7 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
         isRestDay: false,
         splitTitleEn: '',
         splitTitleAr: '',
+        targetMuscles: [],
         exercises: []
       };
     });
@@ -312,7 +352,7 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
   };
 
   const applyTemplate = (templateId: string): boolean => {
-    const template = WORKOUT_TEMPLATES.find(t => t.id === templateId);
+    const template = allTemplates.find(t => t.id === templateId);
     if (!template) return false;
 
     const newSchedule: Record<DayOfWeek, DaySchedule> = {} as Record<DayOfWeek, DaySchedule>;
@@ -332,7 +372,8 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
               sets: item.sets,
               reps: item.reps,
               restSeconds: item.restSec || ex.defaultRestSec,
-              targetWeightKg: 0
+              targetWeightKg: item.targetWeightKg || 0,
+              notes: item.notes || ''
             });
           }
         });
@@ -345,12 +386,30 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
         isRestDay: templateDay ? templateDay.isRestDay : false,
         splitTitleEn: templateDay ? templateDay.splitTitleEn : '',
         splitTitleAr: templateDay ? templateDay.splitTitleAr : '',
+        targetMuscles: templateDay ? templateDay.targetMuscles : [],
         exercises: dayExercises
       };
     });
 
     setWeeklySchedule(newSchedule);
     return true;
+  };
+
+  const applyFullSchedule = (newSchedule: Record<DayOfWeek, DaySchedule>) => {
+    setWeeklySchedule(newSchedule);
+  };
+
+  const saveCustomTemplate = (template: Omit<WorkoutTemplate, 'id' | 'isCustom'>) => {
+    const newCustom: WorkoutTemplate = {
+      ...template,
+      id: `custom-tmpl-${Date.now()}`,
+      isCustom: true
+    };
+    setCustomTemplates(prev => [newCustom, ...prev]);
+  };
+
+  const deleteCustomTemplate = (id: string) => {
+    setCustomTemplates(prev => prev.filter(t => t.id !== id));
   };
 
   const addCustomExercise = (newEx: Omit<Exercise, 'id' | 'isCustom'>) => {
@@ -411,9 +470,15 @@ export const WorkoutProvider: React.FC<{ children: React.ReactNode }> = ({ child
       updatePlannedExercise,
       toggleRestDay,
       updateDayTitle,
+      updateDayMuscles,
       clearDaySchedule,
       resetEntireWeek,
       applyTemplate,
+      applyFullSchedule,
+      customTemplates,
+      allTemplates,
+      saveCustomTemplate,
+      deleteCustomTemplate,
       addCustomExercise,
       workoutLogs,
       addWorkoutLog,

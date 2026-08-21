@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { WorkoutTemplate, DayOfWeek } from '../types/fitness';
-import { WORKOUT_TEMPLATES } from '../data/templatesData';
 import { useLanguage } from '../context/LanguageContext';
 import { useWorkout } from '../context/WorkoutContext';
 import { 
@@ -8,26 +7,36 @@ import {
   Check, 
   Calendar, 
   Dumbbell, 
-  ChevronRight, 
-  ChevronDown, 
   Sparkles, 
-  Flame,
-  ArrowRight,
-  ShieldCheck
+  Trash2,
+  ShieldCheck,
+  Plus,
+  Weight
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
 interface TemplatesViewProps {
   onTemplateApplied: () => void;
+  onOpenCustomDesigner?: () => void;
 }
 
-export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateApplied }) => {
+export const TemplatesView: React.FC<TemplatesViewProps> = ({ 
+  onTemplateApplied,
+  onOpenCustomDesigner 
+}) => {
   const { language, t } = useLanguage();
-  const { applyTemplate, exercises } = useWorkout();
-  const [selectedTemplateId, setSelectedTemplateId] = useState<string>(WORKOUT_TEMPLATES[0].id);
+  const { 
+    allTemplates, 
+    customTemplates, 
+    applyTemplate, 
+    deleteCustomTemplate,
+    exercises 
+  } = useWorkout();
+
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>(allTemplates[0]?.id || 'ppl-classic');
   const [appliedId, setAppliedId] = useState<string | null>(null);
 
-  const activeTemplate = WORKOUT_TEMPLATES.find(t => t.id === selectedTemplateId) || WORKOUT_TEMPLATES[0];
+  const activeTemplate = allTemplates.find(t => t.id === selectedTemplateId) || allTemplates[0];
 
   const daysOrder: DayOfWeek[] = ['sat', 'sun', 'mon', 'tue', 'wed', 'thu', 'fri'];
 
@@ -58,31 +67,48 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateApplied 
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 animate-in fade-in duration-200">
       
       {/* Header Banner */}
-      <div className="bg-zinc-900/90 border border-zinc-800 rounded-3xl p-6 sm:p-8 space-y-3 shadow-xl">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold">
-          <Sparkles className="w-3.5 h-3.5" />
-          <span>{language === 'ar' ? 'جداول تدريبية مدروسة علمياً' : 'Scientifically Structured Training Splits'}</span>
+      <div className="bg-zinc-900/90 border border-zinc-800 rounded-3xl p-6 sm:p-8 space-y-4 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="space-y-2">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold">
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>{language === 'ar' ? 'جداول تدريبية احترافية ومخصصة' : 'Scientifically Structured Training Splits'}</span>
+          </div>
+          <h1 className="text-2xl sm:text-4xl font-black text-white">{t('templatesTitle')}</h1>
+          <p className="text-zinc-400 text-xs sm:text-sm max-w-2xl">
+            {t('templatesDesc')}
+          </p>
         </div>
-        <h1 className="text-2xl sm:text-4xl font-black text-white">{t('templatesTitle')}</h1>
-        <p className="text-zinc-400 text-xs sm:text-sm max-w-2xl">
-          {t('templatesDesc')}
-        </p>
+
+        {onOpenCustomDesigner && (
+          <button
+            onClick={onOpenCustomDesigner}
+            className="flex items-center gap-2 px-5 py-3 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-zinc-950 font-black text-xs sm:text-sm transition-all shadow-lg shadow-emerald-500/20 cursor-pointer shrink-0"
+          >
+            <Sparkles className="w-4 h-4" />
+            <span>{t('customRoutineDesigner')}</span>
+          </button>
+        )}
       </div>
 
       {/* Main Grid: Templates List & Detailed Schedule Breakdown */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         
-        {/* Left Column: Template Cards List (4 cols) */}
+        {/* Left Column: Template Cards List (5 cols) */}
         <div className="lg:col-span-5 space-y-3">
-          <h2 className="text-sm font-bold text-zinc-400 uppercase tracking-wider px-1">
-            {language === 'ar' ? 'اختر النظام المناسب:' : 'Choose Training Protocol:'}
-          </h2>
+          <div className="flex items-center justify-between px-1">
+            <h2 className="text-xs font-bold text-zinc-400 uppercase tracking-wider">
+              {language === 'ar' ? 'الجداول الجاهزة والمحفوظة:' : 'Ready-made & Custom Splits:'}
+            </h2>
+            <span className="text-xs text-zinc-500 font-mono">
+              {allTemplates.length} {language === 'ar' ? 'جداول' : 'plans'}
+            </span>
+          </div>
 
-          <div className="space-y-2.5">
-            {WORKOUT_TEMPLATES.map((tmpl) => {
+          <div className="space-y-3">
+            {allTemplates.map((tmpl) => {
               const isSelected = tmpl.id === selectedTemplateId;
               const isApplied = tmpl.id === appliedId;
 
@@ -98,25 +124,49 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateApplied 
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div>
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 uppercase">
-                        {tmpl.daysPerWeek} {t('daysCount')}
-                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 uppercase">
+                          {tmpl.daysPerWeek} {t('daysCount')}
+                        </span>
+                        {tmpl.isCustom && (
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-sky-500/15 text-sky-400 border border-sky-500/30 uppercase">
+                            {language === 'ar' ? 'مخصص' : 'Custom'}
+                          </span>
+                        )}
+                      </div>
                       <h3 className="font-bold text-zinc-100 text-base mt-1.5">
                         {language === 'ar' ? tmpl.nameAr : tmpl.nameEn}
                       </h3>
                     </div>
 
-                    <span className="text-xs font-semibold px-2 py-0.5 rounded bg-zinc-800 text-zinc-400">
-                      {t(tmpl.difficulty as any)}
-                    </span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xs font-semibold px-2 py-0.5 rounded bg-zinc-800 text-zinc-400">
+                        {t(tmpl.difficulty as any)}
+                      </span>
+                      {tmpl.isCustom && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (window.confirm(language === 'ar' ? 'هل تريد حذف هذا الجدول المخصص؟' : 'Delete this custom routine?')) {
+                              deleteCustomTemplate(tmpl.id);
+                            }
+                          }}
+                          className="p-1 text-zinc-500 hover:text-rose-400 transition-colors"
+                          title={t('deleteExercise')}
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   <p className="text-xs text-zinc-400 line-clamp-2">
                     {language === 'ar' ? tmpl.descriptionAr : tmpl.descriptionEn}
                   </p>
 
-                  <div className="flex items-center justify-between pt-1 border-t border-zinc-850">
-                    <div className="flex items-center gap-1.5">
+                  <div className="flex items-center justify-between pt-2 border-t border-zinc-850">
+                    <div className="flex flex-wrap items-center gap-1">
                       {tmpl.tags.map(tag => (
                         <span key={tag} className="text-[10px] px-2 py-0.5 rounded-full bg-zinc-900 text-zinc-400 border border-zinc-800">
                           {tag}
@@ -217,7 +267,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateApplied 
                           <span className="text-[11px] text-zinc-500">
                             {isRest 
                               ? (language === 'ar' ? 'راحة واستشفاء عضلي' : 'Active Recovery') 
-                              : `${dayPlan.exerciseIds.length} ${language === 'ar' ? 'تمارين أساسية' : 'Exercises'}`}
+                              : `${dayPlan.exerciseIds.length} ${language === 'ar' ? 'تمارين مبرمجة' : 'Exercises'}`}
                           </span>
                         </div>
                       </div>
@@ -229,17 +279,24 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ onTemplateApplied 
                       )}
                     </div>
 
-                    {/* Exercise Pills */}
+                    {/* Exercise Pills with weight if present */}
                     {!isRest && dayPlan.exerciseIds.length > 0 && (
                       <div className="flex flex-wrap gap-1.5 mt-3 pt-2.5 border-t border-zinc-900">
                         {dayPlan.exerciseIds.map((item, idx) => (
                           <span
                             key={idx}
-                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-zinc-900/90 border border-zinc-800 text-[11px] text-zinc-300 font-medium"
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-zinc-900/90 border border-zinc-800 text-[11px] text-zinc-300 font-medium"
                           >
                             <Dumbbell className="w-3 h-3 text-emerald-400" />
                             <span className="truncate max-w-[150px]">{getExerciseName(item.exerciseId)}</span>
-                            <span className="text-zinc-500 font-mono text-[10px]">({item.sets}×{item.reps})</span>
+                            <span className="text-zinc-500 font-mono text-[10px]">
+                              ({item.sets}×{item.reps})
+                            </span>
+                            {item.targetWeightKg ? (
+                              <span className="text-emerald-400 font-mono text-[10px] font-bold">
+                                {item.targetWeightKg}kg
+                              </span>
+                            ) : null}
                           </span>
                         ))}
                       </div>

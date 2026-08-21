@@ -1,0 +1,6 @@
+{
+  "name": "PulseFit | فتنس بلس - Workout Planner & Exercise Directory",
+  "description": "Bilingual (Arabic & English) gym workout planner, exercise database, muscle classifications, routine builder, and live workout tracker.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

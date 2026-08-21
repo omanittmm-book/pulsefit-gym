@@ -31,8 +31,9 @@ import {
 } from 'lucide-react';
 
 interface CustomRoutineDesignerProps {
-  onRoutineSaved: () => void;
-  onOpenTemplates: () => void;
+  onRoutineSaved?: () => void;
+  onApplyToSchedule?: () => void;
+  onOpenTemplates?: () => void;
 }
 
 const ALL_DAYS: DayOfWeek[] = ['sat', 'sun', 'mon', 'tue', 'wed', 'thu', 'fri'];
@@ -174,6 +175,7 @@ const PRESET_SPLITS = [
 
 export const CustomRoutineDesigner: React.FC<CustomRoutineDesignerProps> = ({
   onRoutineSaved,
+  onApplyToSchedule,
   onOpenTemplates
 }) => {
   const { language, t } = useLanguage();
@@ -344,13 +346,18 @@ export const CustomRoutineDesigner: React.FC<CustomRoutineDesignerProps> = ({
     });
   };
 
+  const triggerFinished = () => {
+    if (onRoutineSaved) onRoutineSaved();
+    if (onApplyToSchedule) onApplyToSchedule();
+  };
+
   // Save to weekly schedule
   const handleSaveToWeeklySchedule = () => {
     applyFullSchedule(draftSchedule);
     setSavedSuccess(true);
     setTimeout(() => {
       setSavedSuccess(false);
-      onRoutineSaved();
+      triggerFinished();
     }, 1200);
   };
 
@@ -364,7 +371,7 @@ export const CustomRoutineDesigner: React.FC<CustomRoutineDesignerProps> = ({
         splitTitleEn: d.splitTitleEn || d.nameEn,
         splitTitleAr: d.splitTitleAr || d.nameAr,
         targetMuscles: d.targetMuscles || [],
-        exerciseIds: d.exercises.map(e => ({
+        exerciseIds: (d.exercises || []).map(e => ({
           exerciseId: e.exerciseId,
           sets: e.sets,
           reps: e.reps,
@@ -392,7 +399,7 @@ export const CustomRoutineDesigner: React.FC<CustomRoutineDesignerProps> = ({
     setSavedSuccess(true);
     setTimeout(() => {
       setSavedSuccess(false);
-      onRoutineSaved();
+      triggerFinished();
     }, 1200);
   };
 

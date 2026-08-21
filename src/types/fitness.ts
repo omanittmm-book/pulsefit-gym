@@ -103,6 +103,7 @@ export interface WorkoutLogItem {
   durationMinutes: number;
   totalVolumeKg: number;
   completedSetsCount: number;
+  totalCalories?: number;
   exercisesSummary: {
     exerciseNameEn: string;
     exerciseNameAr: string;

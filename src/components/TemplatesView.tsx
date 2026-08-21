@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { WorkoutTemplate, DayOfWeek } from '../types/fitness';
+import { WORKOUT_TEMPLATES } from '../data/templatesData';
 import { useLanguage } from '../context/LanguageContext';
 import { useWorkout } from '../context/WorkoutContext';
 import { 
@@ -36,7 +37,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>(allTemplates[0]?.id || 'ppl-classic');
   const [appliedId, setAppliedId] = useState<string | null>(null);
 
-  const activeTemplate = allTemplates.find(t => t.id === selectedTemplateId) || allTemplates[0];
+  const activeTemplate = allTemplates.find(t => t && t.id === selectedTemplateId) || allTemplates[0] || WORKOUT_TEMPLATES[0];
 
   const daysOrder: DayOfWeek[] = ['sat', 'sun', 'mon', 'tue', 'wed', 'thu', 'fri'];
 
@@ -60,8 +61,9 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({
     }
   };
 
-  const getExerciseName = (id: string) => {
-    const ex = exercises.find(e => e.id === id);
+  const getExerciseName = (id?: string) => {
+    if (!id) return '';
+    const ex = exercises.find(e => e && e.id === id);
     if (!ex) return id;
     return language === 'ar' ? ex.nameAr : ex.nameEn;
   };
@@ -165,14 +167,14 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({
                     {language === 'ar' ? tmpl.descriptionAr : tmpl.descriptionEn}
                   </p>
 
-                  <div className="flex items-center justify-between pt-2 border-t border-zinc-850">
-                    <div className="flex flex-wrap items-center gap-1">
-                      {tmpl.tags.map(tag => (
-                        <span key={tag} className="text-[10px] px-2 py-0.5 rounded-full bg-zinc-900 text-zinc-400 border border-zinc-800">
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
+                    <div className="flex items-center justify-between pt-2 border-t border-zinc-850">
+                      <div className="flex flex-wrap items-center gap-1">
+                        {(tmpl.tags || []).map(tag => (
+                          <span key={tag} className="text-[10px] px-2 py-0.5 rounded-full bg-zinc-900 text-zinc-400 border border-zinc-800">
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
 
                     <button
                       type="button"
@@ -239,12 +241,14 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({
 
             <div className="space-y-2.5">
               {daysOrder.map((dayKey) => {
+                if (!activeTemplate || !activeTemplate.schedule) return null;
                 const dayPlan = activeTemplate.schedule[dayKey];
                 if (!dayPlan) return null;
 
                 const dayName = t(dayKey as any);
                 const isRest = dayPlan.isRestDay;
                 const splitTitle = language === 'ar' ? dayPlan.splitTitleAr : dayPlan.splitTitleEn;
+                const exList = Array.isArray(dayPlan.exerciseIds) ? dayPlan.exerciseIds : [];
 
                 return (
                   <div
@@ -267,22 +271,22 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({
                           <span className="text-[11px] text-zinc-500">
                             {isRest 
                               ? (language === 'ar' ? 'راحة واستشفاء عضلي' : 'Active Recovery') 
-                              : `${dayPlan.exerciseIds.length} ${language === 'ar' ? 'تمارين مبرمجة' : 'Exercises'}`}
+                              : `${exList.length} ${language === 'ar' ? 'تمارين مبرمجة' : 'Exercises'}`}
                           </span>
                         </div>
                       </div>
 
                       {!isRest && (
                         <span className="text-xs font-mono font-semibold px-2 py-0.5 rounded bg-zinc-900 border border-zinc-800 text-emerald-400">
-                          {dayPlan.exerciseIds.length} {language === 'ar' ? 'تمارين' : 'ex'}
+                          {exList.length} {language === 'ar' ? 'تمارين' : 'ex'}
                         </span>
                       )}
                     </div>
 
                     {/* Exercise Pills with weight if present */}
-                    {!isRest && dayPlan.exerciseIds.length > 0 && (
+                    {!isRest && exList.length > 0 && (
                       <div className="flex flex-wrap gap-1.5 mt-3 pt-2.5 border-t border-zinc-900">
-                        {dayPlan.exerciseIds.map((item, idx) => (
+                        {exList.map((item, idx) => (
                           <span
                             key={idx}
                             className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-zinc-900/90 border border-zinc-800 text-[11px] text-zinc-300 font-medium"

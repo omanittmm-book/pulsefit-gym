@@ -16,16 +16,13 @@ interface UserProfileContextType {
   bmr: number;
   tdee: number;
   bmiData: { bmi: number; categoryAr: string; categoryEn: string; color: string };
-  getExerciseCalorieEstimate: (exercise: Exercise, sets?: number, repsText?: string, restSec?: number, targetWeightKg?: number) => {
+  getExerciseCalorieEstimate: (exercise?: Exercise | null, sets?: number, repsText?: string, restSec?: number, targetWeightKg?: number) => {
     totalCalories: number;
     caloriesPerSet: number;
     durationMinutes: number;
     met: number;
   };
-  getScheduleDayCalories: (exercises: PlannedExercise[]) => {
-    totalCalories: number;
-    totalDurationMin: number;
-  };
+  getScheduleDayCalories: (input?: any) => number;
   isProfileModalOpen: boolean;
   setIsProfileModalOpen: (open: boolean) => void;
   isTreadmillModalOpen: boolean;
@@ -79,21 +76,31 @@ export const UserProfileProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const bmiData = calculateBMI(profile.weightKg, profile.heightCm);
 
   const getExerciseCalorieEstimate = (
-    exercise: Exercise,
-    sets: number = exercise.defaultSets || 3,
-    repsText: string = exercise.defaultReps || '10-12',
-    restSec: number = exercise.defaultRestSec || 60,
+    exercise?: Exercise | null,
+    sets: number = (exercise && exercise.defaultSets) || 3,
+    repsText: string = (exercise && exercise.defaultReps) || '10-12',
+    restSec: number = (exercise && exercise.defaultRestSec) || 60,
     targetWeightKg: number = 0
   ) => {
     return estimateExerciseCalories(exercise, sets, repsText, restSec, targetWeightKg, profile);
   };
 
-  const getScheduleDayCalories = (exercises: PlannedExercise[]) => {
-    let totalCalories = 0;
-    let totalDurationMin = 0;
+  const getScheduleDayCalories = (input?: any): number => {
+    if (!input) return 0;
 
-    exercises.forEach(item => {
-      if (item.exercise) {
+    let exerciseList: PlannedExercise[] = [];
+    if (Array.isArray(input)) {
+      exerciseList = input;
+    } else if (input && typeof input === 'object') {
+      if (input.isRestDay) return 0;
+      if (Array.isArray(input.exercises)) {
+        exerciseList = input.exercises;
+      }
+    }
+
+    let totalCalories = 0;
+    exerciseList.forEach(item => {
+      if (item && item.exercise) {
         const res = estimateExerciseCalories(
           item.exercise,
           item.sets,
@@ -103,11 +110,10 @@ export const UserProfileProvider: React.FC<{ children: React.ReactNode }> = ({ c
           profile
         );
         totalCalories += res.totalCalories;
-        totalDurationMin += res.durationMinutes;
       }
     });
 
-    return { totalCalories, totalDurationMin };
+    return totalCalories;
   };
 
   return (

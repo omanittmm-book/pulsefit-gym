@@ -84,11 +84,12 @@ const SPECIFIC_EXERCISE_MET: Record<string, number> = {
 /**
  * Returns the MET value for an exercise
  */
-export function getExerciseMET(exercise: Exercise): number {
-  if (SPECIFIC_EXERCISE_MET[exercise.id]) {
+export function getExerciseMET(exercise?: Exercise | null): number {
+  if (!exercise) return 5.0;
+  if (exercise.id && SPECIFIC_EXERCISE_MET[exercise.id]) {
     return SPECIFIC_EXERCISE_MET[exercise.id];
   }
-  return CATEGORY_BASE_MET[exercise.category] || 5.0;
+  return (exercise.category && CATEGORY_BASE_MET[exercise.category]) || 5.0;
 }
 
 /**
@@ -108,24 +109,34 @@ export function calculateCaloriesPerMinute(met: number, weightKg: number): numbe
  * - Target weight lifted (adds progressive resistance work)
  */
 export function estimateExerciseCalories(
-  exercise: Exercise,
+  exercise?: Exercise | null,
   sets: number = 3,
   repsText: string = '10-12',
   restSec: number = 60,
   targetWeightKg: number = 0,
-  profile: UserProfile
+  profile?: UserProfile
 ): { totalCalories: number; caloriesPerSet: number; durationMinutes: number; met: number } {
+  const effectiveProfile: UserProfile = profile || {
+    weightKg: 75,
+    heightCm: 175,
+    age: 26,
+    gender: 'male',
+    activityLevel: 'moderate',
+    weightUnit: 'kg'
+  };
+
   const met = getExerciseMET(exercise);
-  const { weightKg, gender, age } = profile;
+  const { weightKg, gender, age } = effectiveProfile;
 
   // Estimate average reps number from text (e.g. "8-10" -> 9, "45-60 sec" -> 15 reps equivalent)
   let numericReps = 10;
-  if (repsText.includes('-')) {
-    const parts = repsText.split('-').map(p => parseInt(p.trim())).filter(n => !isNaN(n));
+  const safeRepsText = repsText ? String(repsText) : '10';
+  if (safeRepsText.includes('-')) {
+    const parts = safeRepsText.split('-').map(p => parseInt(p.trim())).filter(n => !isNaN(n));
     if (parts.length >= 2) numericReps = (parts[0] + parts[1]) / 2;
     else if (parts.length === 1) numericReps = parts[0];
-  } else if (!isNaN(parseInt(repsText))) {
-    numericReps = parseInt(repsText);
+  } else if (!isNaN(parseInt(safeRepsText))) {
+    numericReps = parseInt(safeRepsText);
   }
 
   // Active work time per set in seconds (~3.5 seconds per repetition tempo + isometric squeeze)

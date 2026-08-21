@@ -527,9 +527,10 @@ export const WeeklyPlanner: React.FC<WeeklyPlannerProps> = ({
         ) : currentSchedule.exercises.length > 0 ? (
           <div className="space-y-3">
             {currentSchedule.exercises.map((item, index) => {
+              if (!item || !item.exercise) return null;
               const isFirst = index === 0;
               const isLast = index === currentSchedule.exercises.length - 1;
-              const isTreadmill = item.exercise.id.includes('treadmill');
+              const isTreadmill = item.exercise.id ? item.exercise.id.includes('treadmill') : false;
               const exBurn = getExerciseCalorieEstimate(
                 item.exercise,
                 item.sets,
@@ -553,7 +554,7 @@ export const WeeklyPlanner: React.FC<WeeklyPlannerProps> = ({
 
                       <div className="w-12 h-12 rounded-xl overflow-hidden bg-zinc-900 border border-zinc-800 shrink-0 relative">
                         <img 
-                          src={item.exercise.imageUrl} 
+                          src={item.exercise.imageUrl || ''} 
                           alt=""
                           className="w-full h-full object-cover"
                         />

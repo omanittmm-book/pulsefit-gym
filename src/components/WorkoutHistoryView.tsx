@@ -1,7 +1,7 @@
 import React from 'react';
 import { useLanguage } from '../context/LanguageContext';
 import { useWorkout } from '../context/WorkoutContext';
-import { History, Trash2, Calendar, Clock, Weight, Trophy, Dumbbell, Play } from 'lucide-react';
+import { History, Trash2, Calendar, Clock, Weight, Trophy, Dumbbell, Play, Flame } from 'lucide-react';
 
 interface WorkoutHistoryViewProps {
   onStartLiveWorkout: () => void;
@@ -29,6 +29,7 @@ export const WorkoutHistoryView: React.FC<WorkoutHistoryViewProps> = ({ onStartL
 
   const totalAllTimeVolume = workoutLogs.reduce((acc, curr) => acc + (curr.totalVolumeKg || 0), 0);
   const totalCompletedSessions = workoutLogs.length;
+  const totalAllTimeCalories = workoutLogs.reduce((acc, curr) => acc + (curr.totalCalories || Math.round((curr.durationMinutes || 30) * 7.2)), 0);
 
   return (
     <div className="space-y-8">
@@ -62,14 +63,24 @@ export const WorkoutHistoryView: React.FC<WorkoutHistoryViewProps> = ({ onStartL
 
       {/* Stats Summary Strip */}
       {workoutLogs.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="p-5 rounded-2xl bg-zinc-900/80 border border-zinc-800 flex items-center gap-4">
             <div className="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
               <Trophy className="w-6 h-6" />
             </div>
             <div>
-              <span className="text-xs text-zinc-500 font-semibold">{language === 'ar' ? 'إجمالي الجلسات المنجزة' : 'Total Sessions'}</span>
+              <span className="text-xs text-zinc-500 font-semibold">{language === 'ar' ? 'إجمالي الجلسات' : 'Total Sessions'}</span>
               <p className="text-xl font-black text-white">{totalCompletedSessions}</p>
+            </div>
+          </div>
+
+          <div className="p-5 rounded-2xl bg-zinc-900/80 border border-zinc-800 flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+              <Flame className="w-6 h-6" />
+            </div>
+            <div>
+              <span className="text-xs text-zinc-500 font-semibold">{language === 'ar' ? 'إجمالي السعرات المحروقة' : 'Total Calories Burned'}</span>
+              <p className="text-xl font-black text-emerald-400 font-mono">{totalAllTimeCalories.toLocaleString()} kcal</p>
             </div>
           </div>
 
@@ -117,14 +128,18 @@ export const WorkoutHistoryView: React.FC<WorkoutHistoryViewProps> = ({ onStartL
                   </span>
                 </div>
 
-                <div className="flex items-center gap-3">
-                  <span className="text-xs px-2.5 py-1 rounded-lg bg-zinc-950 text-emerald-400 border border-zinc-800 font-bold">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-xs px-2.5 py-1 rounded-lg bg-emerald-950/60 text-emerald-400 border border-emerald-800/50 font-bold font-mono flex items-center gap-1">
+                    <Flame className="w-3.5 h-3.5" />
+                    <span>{log.totalCalories || Math.round(log.durationMinutes * 7.2)} kcal</span>
+                  </span>
+                  <span className="text-xs px-2.5 py-1 rounded-lg bg-zinc-950 text-zinc-300 border border-zinc-800 font-bold">
                     {log.durationMinutes} {t('minutes')}
                   </span>
                   <span className="text-xs px-2.5 py-1 rounded-lg bg-zinc-950 text-sky-400 border border-zinc-800 font-bold">
-                    {log.totalVolumeKg} {t('kg')}
+                    {log.totalVolumeKg.toLocaleString()} {t('kg')}
                   </span>
-                  <span className="text-xs px-2.5 py-1 rounded-lg bg-zinc-950 text-zinc-300 border border-zinc-800 font-bold">
+                  <span className="text-xs px-2.5 py-1 rounded-lg bg-zinc-950 text-zinc-400 border border-zinc-800 font-bold">
                     {log.completedSetsCount} {t('sets')}
                   </span>
 

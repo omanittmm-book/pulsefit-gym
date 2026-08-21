@@ -70,58 +70,93 @@ const DAY_NAMES: Record<DayOfWeek, { en: string; ar: string }> = {
 };
 
 const getInitialSchedule = (allExercises: Exercise[]): Record<DayOfWeek, DaySchedule> => {
+  const defaultPpl = WORKOUT_TEMPLATES[0];
+  const emptySchedule: Record<DayOfWeek, DaySchedule> = {} as Record<DayOfWeek, DaySchedule>;
+
   const saved = localStorage.getItem('pulsefit_schedule');
+  let parsedSchedule: Record<string, any> | null = null;
   if (saved) {
     try {
       const parsed = JSON.parse(saved);
-      // Validate structure
-      if (parsed && parsed.sat && parsed.sun && parsed.mon) {
-        return parsed;
+      if (parsed && typeof parsed === 'object') {
+        parsedSchedule = parsed;
       }
     } catch {
-      // Fallback
+      parsedSchedule = null;
     }
   }
 
-  // Populate with default PPL routine
-  const ppl = WORKOUT_TEMPLATES[0];
-  const schedule: Record<DayOfWeek, DaySchedule> = {} as Record<DayOfWeek, DaySchedule>;
-
   DEFAULT_DAYS.forEach((dayKey) => {
-    const templateDay = ppl.schedule[dayKey];
-    const dayExercises: PlannedExercise[] = [];
+    if (parsedSchedule && parsedSchedule[dayKey]) {
+      const dayData = parsedSchedule[dayKey];
+      const validExercises: PlannedExercise[] = [];
 
-    if (templateDay && !templateDay.isRestDay) {
-      templateDay.exerciseIds.forEach(item => {
-        const ex = allExercises.find(e => e.id === item.exerciseId);
-        if (ex) {
-          dayExercises.push({
-            id: `${dayKey}-${ex.id}-${Math.random().toString(36).substr(2, 9)}`,
-            exerciseId: ex.id,
-            exercise: ex,
-            sets: item.sets,
-            reps: item.reps,
-            restSeconds: item.restSec || ex.defaultRestSec,
-            targetWeightKg: (item as any).targetWeightKg || 0,
-            notes: (item as any).notes || ''
-          });
-        }
-      });
+      if (Array.isArray(dayData.exercises)) {
+        dayData.exercises.forEach((item: any) => {
+          if (!item) return;
+          const ex = allExercises.find(e => e.id === item.exerciseId) || item.exercise;
+          if (ex) {
+            validExercises.push({
+              id: item.id || `${dayKey}-${ex.id}-${Math.random().toString(36).substr(2, 7)}`,
+              exerciseId: ex.id,
+              exercise: ex,
+              sets: Number(item.sets) || ex.defaultSets || 3,
+              reps: String(item.reps || ex.defaultReps || '10-12'),
+              restSeconds: Number(item.restSeconds) || ex.defaultRestSec || 60,
+              targetWeightKg: Number(item.targetWeightKg) || 0,
+              notes: String(item.notes || '')
+            });
+          }
+        });
+      }
+
+      emptySchedule[dayKey] = {
+        day: dayKey,
+        nameEn: DAY_NAMES[dayKey].en,
+        nameAr: DAY_NAMES[dayKey].ar,
+        isRestDay: Boolean(dayData.isRestDay),
+        splitTitleEn: dayData.splitTitleEn || '',
+        splitTitleAr: dayData.splitTitleAr || '',
+        targetMuscles: Array.isArray(dayData.targetMuscles) ? dayData.targetMuscles : [],
+        exercises: validExercises
+      };
+    } else {
+      // Use default template for this day
+      const templateDay = defaultPpl ? defaultPpl.schedule[dayKey] : null;
+      const dayExercises: PlannedExercise[] = [];
+
+      if (templateDay && !templateDay.isRestDay && Array.isArray(templateDay.exerciseIds)) {
+        templateDay.exerciseIds.forEach(item => {
+          const ex = allExercises.find(e => e.id === item.exerciseId);
+          if (ex) {
+            dayExercises.push({
+              id: `${dayKey}-${ex.id}-${Math.random().toString(36).substr(2, 9)}`,
+              exerciseId: ex.id,
+              exercise: ex,
+              sets: item.sets,
+              reps: item.reps,
+              restSeconds: item.restSec || ex.defaultRestSec || 60,
+              targetWeightKg: (item as any).targetWeightKg || 0,
+              notes: (item as any).notes || ''
+            });
+          }
+        });
+      }
+
+      emptySchedule[dayKey] = {
+        day: dayKey,
+        nameEn: DAY_NAMES[dayKey].en,
+        nameAr: DAY_NAMES[dayKey].ar,
+        isRestDay: templateDay ? Boolean(templateDay.isRestDay) : false,
+        splitTitleEn: templateDay ? templateDay.splitTitleEn : '',
+        splitTitleAr: templateDay ? templateDay.splitTitleAr : '',
+        targetMuscles: templateDay && Array.isArray(templateDay.targetMuscles) ? templateDay.targetMuscles : [],
+        exercises: dayExercises
+      };
     }
-
-    schedule[dayKey] = {
-      day: dayKey,
-      nameEn: DAY_NAMES[dayKey].en,
-      nameAr: DAY_NAMES[dayKey].ar,
-      isRestDay: templateDay ? templateDay.isRestDay : false,
-      splitTitleEn: templateDay ? templateDay.splitTitleEn : '',
-      splitTitleAr: templateDay ? templateDay.splitTitleAr : '',
-      targetMuscles: templateDay ? templateDay.targetMuscles : [],
-      exercises: dayExercises
-    };
   });
 
-  return schedule;
+  return emptySchedule;
 };
 
 const WorkoutContext = createContext<WorkoutContextType | undefined>(undefined);

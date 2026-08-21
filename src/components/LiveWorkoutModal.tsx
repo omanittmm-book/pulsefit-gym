@@ -101,6 +101,7 @@ export const LiveWorkoutModal: React.FC<LiveWorkoutModalProps> = ({ day, onClose
     durationMin: number;
     volumeKg: number;
     completedSets: number;
+    totalCalories: number;
   } | null>(null);
 
   // Overall workout elapsed timer
@@ -204,6 +205,7 @@ export const LiveWorkoutModal: React.FC<LiveWorkoutModalProps> = ({ day, onClose
   const handleFinishWorkout = () => {
     let totalVol = 0;
     let setsCount = 0;
+    let calculatedCalorieBurn = 0;
 
     const summaryList = sessionExercises.map(item => {
       const sets = setsData[item.id] || [];
@@ -211,16 +213,29 @@ export const LiveWorkoutModal: React.FC<LiveWorkoutModalProps> = ({ day, onClose
         if (s.completed) {
           totalVol += (s.weightKg || 0) * (s.reps || 0);
           setsCount++;
+
+          const res = getExerciseCalorieEstimate(
+            item.exercise,
+            1,
+            String(s.reps || 10),
+            item.restSeconds || 60,
+            s.weightKg || 0
+          );
+          calculatedCalorieBurn += res.caloriesPerSet || 12;
         }
       });
       return {
-        exerciseNameEn: item.exercise.nameEn,
-        exerciseNameAr: item.exercise.nameAr,
+        exerciseNameEn: item.exercise?.nameEn || '',
+        exerciseNameAr: item.exercise?.nameAr || '',
         sets
       };
     });
 
     const durationMin = Math.max(1, Math.round(elapsedSeconds / 60));
+
+    // Baseline minimum metabolic expenditure during elapsed session time
+    const timeBasedBurn = Math.round((5.8 * 3.5 * (profile?.weightKg || 75) / 200) * (elapsedSeconds / 60));
+    const finalTotalCalories = Math.max(timeBasedBurn, Math.round(calculatedCalorieBurn));
 
     const logData = {
       workoutTitleEn: (daySchedule && daySchedule.splitTitleEn) || `${t(targetDay as any)} Workout`,
@@ -228,6 +243,7 @@ export const LiveWorkoutModal: React.FC<LiveWorkoutModalProps> = ({ day, onClose
       durationMinutes: durationMin,
       totalVolumeKg: totalVol,
       completedSetsCount: setsCount,
+      totalCalories: finalTotalCalories,
       exercisesSummary: summaryList
     };
 
@@ -235,7 +251,8 @@ export const LiveWorkoutModal: React.FC<LiveWorkoutModalProps> = ({ day, onClose
     setFinalStats({
       durationMin,
       volumeKg: totalVol,
-      completedSets: setsCount
+      completedSets: setsCount,
+      totalCalories: finalTotalCalories
     });
     setIsFinished(true);
 
@@ -328,33 +345,62 @@ export const LiveWorkoutModal: React.FC<LiveWorkoutModalProps> = ({ day, onClose
 
         {/* Finished Summary View */}
         {isFinished && finalStats ? (
-          <div className="p-8 sm:p-12 flex flex-col items-center justify-center text-center space-y-6 overflow-y-auto">
+          <div className="p-6 sm:p-10 flex flex-col items-center justify-center text-center space-y-6 overflow-y-auto max-h-[85vh]">
             <LaFamiliaLogo variant="full" size="lg" />
 
             <div className="w-16 h-16 rounded-3xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 shadow-xl glow-emerald">
               <Trophy className="w-8 h-8" />
             </div>
 
-            <div className="space-y-2 max-w-md">
+            <div className="space-y-1.5 max-w-md">
               <h3 className="text-2xl sm:text-3xl font-black text-white">{t('workoutCompleted')}</h3>
-              <p className="text-zinc-400 text-sm leading-relaxed">{t('congratsMsg')}</p>
+              <p className="text-zinc-400 text-xs sm:text-sm leading-relaxed">{t('congratsMsg')}</p>
+            </div>
+
+            {/* Featured Total Calories Highlight Banner */}
+            <div className="w-full max-w-lg p-5 rounded-3xl bg-gradient-to-r from-emerald-950/80 via-zinc-900 to-emerald-950/80 border border-emerald-500/40 shadow-2xl flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3.5 text-left rtl:text-right">
+                <div className="w-12 h-12 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 shrink-0">
+                  <Flame className="w-7 h-7 animate-pulse text-emerald-400" />
+                </div>
+                <div>
+                  <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider block">
+                    {language === 'ar' ? 'إجمالي السعرات المحروقة' : 'Total Calories Burned'}
+                  </span>
+                  <span className="text-xs text-zinc-500">
+                    {language === 'ar' ? 'محسوبة بدقة وفق وزنك ومجهودك' : 'Calculated accurately based on your biometrics & workload'}
+                  </span>
+                </div>
+              </div>
+
+              <div className="text-right rtl:text-left shrink-0">
+                <span className="text-2xl sm:text-3xl font-black text-emerald-400 font-mono tracking-tight">
+                  {finalStats.totalCalories}
+                </span>
+                <span className="text-xs font-bold text-emerald-300 ml-1 rtl:mr-1">kcal</span>
+              </div>
             </div>
 
             {/* Stats Metrics Grid */}
-            <div className="grid grid-cols-3 gap-3 w-full max-w-lg">
-              <div className="p-4 rounded-2xl bg-zinc-950 border border-zinc-800 text-center space-y-1">
-                <span className="text-xs text-zinc-500 font-semibold">{t('duration')}</span>
-                <p className="text-lg sm:text-xl font-black text-emerald-400">{finalStats.durationMin} {t('minutes')}</p>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 w-full max-w-lg">
+              <div className="p-3.5 rounded-2xl bg-zinc-950 border border-zinc-800 text-center space-y-1">
+                <span className="text-[11px] text-zinc-500 font-semibold">{t('duration')}</span>
+                <p className="text-base sm:text-lg font-black text-emerald-400">{finalStats.durationMin} {t('minutes')}</p>
               </div>
 
-              <div className="p-4 rounded-2xl bg-zinc-950 border border-zinc-800 text-center space-y-1">
-                <span className="text-xs text-zinc-500 font-semibold">{t('completedSets')}</span>
-                <p className="text-lg sm:text-xl font-black text-sky-400">{finalStats.completedSets} {t('sets')}</p>
+              <div className="p-3.5 rounded-2xl bg-zinc-950 border border-zinc-800 text-center space-y-1">
+                <span className="text-[11px] text-zinc-500 font-semibold">{t('completedSets')}</span>
+                <p className="text-base sm:text-lg font-black text-sky-400">{finalStats.completedSets} {t('sets')}</p>
               </div>
 
-              <div className="p-4 rounded-2xl bg-zinc-950 border border-zinc-800 text-center space-y-1">
-                <span className="text-xs text-zinc-500 font-semibold">{t('totalVolume')}</span>
-                <p className="text-lg sm:text-xl font-black text-amber-400">{finalStats.volumeKg} {t('kg')}</p>
+              <div className="p-3.5 rounded-2xl bg-zinc-950 border border-zinc-800 text-center space-y-1">
+                <span className="text-[11px] text-zinc-500 font-semibold">{t('totalVolume')}</span>
+                <p className="text-base sm:text-lg font-black text-amber-400">{finalStats.volumeKg.toLocaleString()} {t('kg')}</p>
+              </div>
+
+              <div className="p-3.5 rounded-2xl bg-zinc-950 border border-zinc-800 text-center space-y-1">
+                <span className="text-[11px] text-zinc-500 font-semibold">{language === 'ar' ? 'حرق السعرات' : 'Calorie Burn'}</span>
+                <p className="text-base sm:text-lg font-black text-emerald-400 font-mono">{finalStats.totalCalories} kcal</p>
               </div>
             </div>
 
